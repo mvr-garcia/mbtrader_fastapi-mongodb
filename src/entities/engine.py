@@ -3,11 +3,17 @@ from src.entities.mercadobitcoin import MB
 
 class TraderEngine:
 
-    def can_invest(self):
+    def __init__(self):
+        self.mb = MB()
+
+    async def can_invest(self):
         pass
 
-    def analysis_sme(self):
+    async def get_last_candles(self):
         pass
 
-    def get_minimal_investment(self):
+    async def analysis_sme(self):
+        pass
+
+    async def get_minimal_investment(self):
         pass
