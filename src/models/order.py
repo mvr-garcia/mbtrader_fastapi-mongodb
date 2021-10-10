@@ -1,9 +1,9 @@
 from datetime import datetime
 from pydantic import BaseModel
 
-from server.config.settings import Fiat
-from server.config.settings import Coin
-from server.config.settings import OrderType
+from src.config.settings import Fiat
+from src.config.settings import Coin
+from src.config.settings import OrderType
 
 
 class Order(BaseModel):
