@@ -8,7 +8,7 @@ def order_entity(item) -> dict:
         "quantity": item["quantity"],
         "fee": item["fee"],
         "net_quantity": item["net_quantity"],
-        "created_timestamp": item["created_timestamp"]
+        "created": item["created"]
     }
 
 

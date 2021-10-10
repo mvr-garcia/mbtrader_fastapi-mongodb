@@ -9,7 +9,11 @@ order = APIRouter()
 
 
 @order.get('/')
-async def all_orders():
-    print(CONN.trader.order.find())
-    print(orders_entity(CONN.trader.order.find()))
+async def list_orders():
+    return orders_entity(CONN.trader.order.find())
+
+
+@order.post('/')
+async def create_order(order: Order):
+    CONN.trader.order.insert_one(dict(order))
     return orders_entity(CONN.trader.order.find())
