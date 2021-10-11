@@ -1,29 +1,36 @@
 import hmac
 import json
 
-from http import client
-from urllib import parse
-from hashlib import sha512
 from collections import OrderedDict
+from datetime import datetime
+from hashlib import sha512
+from http import client
+from urllib import parse, request
 
 from src.config.settings import Pair
 from src.config.settings import OrderType
 from src.config.settings import TRADER_REQUEST_PATH
+from src.config.settings import API_REQUEST_PATH
 from src.config.settings import REQUEST_HOST
 from src.config.settings import MB_TAPI_ID
 from src.config.settings import MB_TAPI_SECRET
 
 
-class MB:
+class MBTrader:
 
     def __init__(self):
         self.tapi_id = MB_TAPI_ID
         self.tapi_secret = MB_TAPI_SECRET
 
+    @staticmethod
+    def __generate_nonce():
+        tapi_nonce = str(int(datetime.now().timestamp()))
+        return tapi_nonce
+
     def post(self, method, params, nome_retorno=''):
 
         params['tapi_method'] = method
-        tapi_nonce = int(time.time()*1000)
+        tapi_nonce = self.__generate_nonce()
         params['tapi_nonce'] = tapi_nonce
         params = parse.urlencode(params)
 
@@ -59,8 +66,7 @@ class MB:
                 conn.close()
 
     def get_account_info(self):
-        params = {}
-        return self.post('get_account_info', params)
+        return self.post('get_account_info', params={})
 
     def buy(self, coin_pair: Pair, quantity: str, limit_price: str):
         return self.make_order(OrderType.BUY, coin_pair, quantity, limit_price)
@@ -77,3 +83,32 @@ class MB:
         }
         method = f'place_{order_type.value}_order'
         return self.post(method, params, 'order')
+
+
+class MBInfo:
+
+    async def get(self, method, nome_retorno=''):
+        req = request.Request('https://'+REQUEST_HOST + API_REQUEST_PATH + method)
+        r = request.urlopen(req).read()
+        response = json.loads(r.decode('utf-8'), object_pairs_hook=OrderedDict)
+
+        if(nome_retorno and nome_retorno != ''):
+            return json.dumps(response[nome_retorno], indent=4)
+        else:
+            return json.dumps(response, indent=4)
+
+    async def ticker(self):
+        '''Retorna as informações do mercado de bitcoin.'''
+        return self.get('ticker', 'ticker')
+
+    async def ticker_litecoin(self):
+        '''Retorna as informações do mercado de litecoin.'''
+        return self.get('ticker_litecoin', 'ticker')
+
+    async def orderbook(self):
+        '''Retorna o livro de ofertas do mercado de bitcoin.'''
+        return self.get('orderbook')
+
+    async def orderbook_litecoin(self):
+        '''Retorna o livro de ofertas do mercado de litecoin.'''
+        return self.get('orderbook_litecoin')
