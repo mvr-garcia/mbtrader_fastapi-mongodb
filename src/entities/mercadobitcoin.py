@@ -46,10 +46,10 @@ class MBTrader:
         }
 
         try:
-            conn = client.HTTPSConnection(REQUEST_HOST)
-            conn.request("POST", TRADER_REQUEST_PATH, params, headers)
+            DB = client.HTTPSDBection(REQUEST_HOST)
+            DB.request("POST", TRADER_REQUEST_PATH, params, headers)
 
-            response = conn.getresponse()
+            response = DB.getresponse()
             response = response.read()
 
             response_json = json.loads(response, object_pairs_hook=OrderedDict)
@@ -62,8 +62,8 @@ class MBTrader:
             else:
                 return json.dumps(response_json['response_data'], indent=4)
         finally:
-            if conn:
-                conn.close()
+            if DB:
+                DB.close()
 
     def get_account_info(self):
         return self.post('get_account_info', params={})
@@ -77,6 +77,14 @@ class MBTrader:
         }
         method = f'place_{order_type.value}_order'
         return self.post(method, params, 'order')
+
+    def cancel_order(self, coin_pair: Pair, order_id):
+
+        params = {
+            'coin_pair': coin_pair.value,
+            'order_id': order_id,
+        }
+        return self.post('cancel_order', params)
 
 
 class MBInfo:

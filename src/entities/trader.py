@@ -12,7 +12,7 @@ from src.settings import PORTFOLIO_INVESTMENT_PERCENTAGE
 from src.settings import MAX_ORDERS_PER_DAY
 
 
-class TraderEngine:
+class Trader:
 
     def __init__(self, coin):
         self.MB = MBTrader()
