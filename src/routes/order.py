@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from src.models.order import Order
 from src.schemas.order import orders_entity
-from src.config.db import CONN
+from src.database.db import CONN
 
 
 order = APIRouter()
