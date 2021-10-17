@@ -46,10 +46,10 @@ class MBTrader:
         }
 
         try:
-            DB = client.HTTPSDBection(REQUEST_HOST)
-            DB.request("POST", TRADER_REQUEST_PATH, params, headers)
+            TAPI = client.HTTPSDBection(REQUEST_HOST)
+            TAPI.request("POST", TRADER_REQUEST_PATH, params, headers)
 
-            response = DB.getresponse()
+            response = TAPI.getresponse()
             response = response.read()
 
             response_json = json.loads(response, object_pairs_hook=OrderedDict)
@@ -62,8 +62,8 @@ class MBTrader:
             else:
                 return json.dumps(response_json['response_data'], indent=4)
         finally:
-            if DB:
-                DB.close()
+            if TAPI:
+                TAPI.close()
 
     def get_account_info(self):
         return self.post('get_account_info', params={})

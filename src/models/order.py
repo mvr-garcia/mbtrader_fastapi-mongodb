@@ -8,11 +8,12 @@ from src.settings import OrderType
 
 class Order(BaseModel):
 
+    user_id = str
     fiat: str = Fiat.BRL.value
     symbol: str = Coin.BTC.value
     pair: str = f"{Fiat.BRL.name}{Coin.BTC.name}"
     order_type: str = OrderType.BUY.value
     quantity: str
-    fee: float
-    net_quantity: float
+    fee: str
+    net_quantity: str
     created: str = datetime.now().isoformat()

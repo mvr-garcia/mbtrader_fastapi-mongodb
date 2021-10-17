@@ -1,6 +1,7 @@
 def order_entity(item) -> dict:
     return {
         "id": str(item["_id"]),
+        "user_id": item["user_id"],
         "fiat": item["fiat"],
         "symbol": item["symbol"],
         "pair": item["pair"],

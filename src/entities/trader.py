@@ -3,10 +3,12 @@ from datetime import date, datetime
 
 import talib as ta
 import numpy as np
+from src.database.db import DB
 
 from src.entities.mercadobitcoin import MBTrader
 from src.entities.mercadobitcoin import MBInfo
-from src.settings import OrderType
+from src.entities.user import UserMongo
+from src.settings import Coin, OrderType
 from src.settings import Pair
 from src.settings import PORTFOLIO_INVESTMENT_PERCENTAGE
 from src.settings import MAX_ORDERS_PER_DAY
@@ -14,9 +16,10 @@ from src.settings import MAX_ORDERS_PER_DAY
 
 class Trader:
 
-    def __init__(self, coin):
+    def __init__(self, user, coin):
         self.MB = MBTrader()
-        self.INFO = MBInfo()
+        self.INFO = MBInfo(coin)
+        self.user = UserMongo(user)
         self.coin = coin
         self.pair = f'BRL{coin}'
         self.account_info = self.MB.get_account_info()
@@ -94,12 +97,16 @@ class Trader:
         trader_decision = self.make_technical_analysis()
 
         if trader_decision and not self.has_open_orders():
+
             investment = self.get_max_investment()
             limit_price = self.INFO.ticker(self.coin)['ticker'][trader_decision.value]
+            user = self.user.get()
 
             if trader_decision == OrderType.SELL:
                 print("\nChecking Sell order possibility.")
-                quantity = ""  # quantidade total da coin no MongoDB
+
+                quantity = user[f"balance_{self.coin.lower()}"]
+
                 if Decimal(quantity) <= 0:
                     print(f"\nNo {self.coin} amount for sell order.")
                     return None
@@ -112,8 +119,36 @@ class Trader:
 
             response = self.MB.make_order(trader_decision, Pair[self.pair], quantity, limit_price)
 
-            if response['response_data']['status_code'] == 100:
-                # grava a quantidade comprada/vendida no banco
+            if response['status_code'] == 100:
+
+                limit_price = response["response_data"]["executed_quantity"]
+                quantity = response["response_data"]["limit_price"]
+                fee = response["response_data"]["fee"]
+                net_quantity = Decimal(quantity) - Decimal(fee)
+                brl_amount = round(float(Decimal(net_quantity) * Decimal(limit_price)), 2)
+
+                if trader_decision == OrderType.SELL:
+                    user["balance_brl"] = user["balance_brl"] + brl_amount
+                    user[f"balance_{self.coin.lower()}"] = "0"
+
+                elif trader_decision == OrderType.BUY:
+                    user["balance_brl"] = user["balance_brl"] - brl_amount
+                    balance = Decimal(user[f"balance_{self.coin.lower()}"]) + Decimal(net_quantity)
+                    user[f"balance_{self.coin.lower()}"] = balance
+
+                self.user.update(user)
+                order = {
+                    "user_id": user["id"],
+                    "fiat": "Reais",
+                    "symbol": Coin[self.coin].value,
+                    "pair": self.pair,
+                    "order_type": trader_decision.value,
+                    "quantity": response["response_data"]["quantity"],
+                    "fee": response["response_data"]["fee"],
+                    "net_quantity": net_quantity,
+                    "created": datetime.now().isoformat()
+                }
+                DB.trader.order.insert_one(order)
                 print(f"\n*** {trader_decision.value} order executed. ***")
             else:
                 print(f"\n*** There was a problem with the {self.coin} order. Please check the reason for the error. ***")
