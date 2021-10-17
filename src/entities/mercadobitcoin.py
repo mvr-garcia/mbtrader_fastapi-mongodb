@@ -1,19 +1,19 @@
 import hmac
 import json
+import requests
 
 from collections import OrderedDict
 from datetime import datetime
 from hashlib import sha512
 from http import client
-from urllib import parse, request
+from urllib import parse
 
-from src.config.settings import Pair
-from src.config.settings import OrderType
-from src.config.settings import TRADER_REQUEST_PATH
-from src.config.settings import API_REQUEST_PATH
-from src.config.settings import REQUEST_HOST
-from src.config.settings import MB_TAPI_ID
-from src.config.settings import MB_TAPI_SECRET
+from src.settings import Pair
+from src.settings import OrderType
+from src.settings import TRADER_REQUEST_PATH
+from src.settings import REQUEST_HOST
+from src.settings import MB_TAPI_ID
+from src.settings import MB_TAPI_SECRET
 
 
 class MBTrader:
@@ -68,13 +68,7 @@ class MBTrader:
     def get_account_info(self):
         return self.post('get_account_info', params={})
 
-    def buy(self, coin_pair: Pair, quantity: str, limit_price: str):
-        return self.make_order(OrderType.BUY, coin_pair, quantity, limit_price)
-
-    def sell(self, coin_pair: Pair, quantity: str, limit_price: str):
-        return self.make_order(OrderType.SELL, coin_pair, quantity, limit_price)
-
-    def make_order(self, order_type, coin_pair, quantity, limit_price):
+    def make_order(self, order_type: OrderType, coin_pair: Pair, quantity: str, limit_price: str):
 
         params = {
             'coin_pair': coin_pair.value,
@@ -87,28 +81,28 @@ class MBTrader:
 
 class MBInfo:
 
-    async def get(self, method, nome_retorno=''):
-        req = request.Request('https://'+REQUEST_HOST + API_REQUEST_PATH + method)
-        r = request.urlopen(req).read()
-        response = json.loads(r.decode('utf-8'), object_pairs_hook=OrderedDict)
+    def __init__(self, coin):
+        self.coin = coin
 
-        if(nome_retorno and nome_retorno != ''):
-            return json.dumps(response[nome_retorno], indent=4)
-        else:
-            return json.dumps(response, indent=4)
+    def __request(self, method, params=None):
+        url = f'https://www.mercadobitcoin.net/api/{self.coin}/{method}'
+        try:
+            response = requests.get(url)
+            return response
+        except requests.exceptions.RequestException:
+            print("\nThe Mercado Bitcoin Data API is not available.")
 
-    async def ticker(self):
-        '''Retorna as informações do mercado de bitcoin.'''
-        return self.get('ticker', 'ticker')
+    def ticker(self):
+        method = 'ticker'
+        return self.__request(method)
 
-    async def ticker_litecoin(self):
-        '''Retorna as informações do mercado de litecoin.'''
-        return self.get('ticker_litecoin', 'ticker')
+    def orderbook(self):
+        method = 'orderbook'
+        return self.__request(method)
 
-    async def orderbook(self):
-        '''Retorna o livro de ofertas do mercado de bitcoin.'''
-        return self.get('orderbook')
-
-    async def orderbook_litecoin(self):
-        '''Retorna o livro de ofertas do mercado de litecoin.'''
-        return self.get('orderbook_litecoin')
+    def get_candles_1h(self, past: int, now: int):
+        url = f"https://mobile.mercadobitcoin.com.br/v4/BRL{self.coin}/candle?from={past}&to={now}&precision=1h"
+        try:
+            return requests.get(url)
+        except requests.exceptions.RequestException:
+            print(f"\nThe Mercado Bitcoin Data API is not available for {self.coin} candles.")

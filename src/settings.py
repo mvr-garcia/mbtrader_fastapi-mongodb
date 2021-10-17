@@ -5,7 +5,9 @@ MB_TAPI_ID = os.environ["MB_TAPI_ID"]
 MB_TAPI_SECRET = os.environ["MB_TAPI_SECRET"]
 REQUEST_HOST = 'www.mercadobitcoin.com.br'
 TRADER_REQUEST_PATH = '/tapi/v3/'
-API_REQUEST_PATH = '/api/'
+
+PORTFOLIO_INVESTMENT_PERCENTAGE = 0.05
+MAX_ORDERS_PER_DAY = 6
 
 
 class Fiat(Enum):

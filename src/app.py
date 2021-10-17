@@ -9,5 +9,5 @@ app.include_router(order)
 i = 0
 
 while i < 10:
-    print("fazendo trade")
+    print("\nfazendo trade")
     i += 1
