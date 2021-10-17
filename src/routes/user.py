@@ -19,7 +19,9 @@ async def list_users():
 @user.post('/user/')
 async def create_user(user: User):
     DB.trader.user.insert_one(dict(user))
-    return list_users()
+    results = DB.trader.user.find()
+    serialized = users_entity(results)
+    return serialized
 
 
 @user.put('/user/{id}')

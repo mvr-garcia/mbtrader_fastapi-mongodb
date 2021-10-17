@@ -18,4 +18,6 @@ async def list_orders():
 @order.post('/order/')
 async def create_order(order: Order):
     DB.trader.order.insert_one(dict(order))
-    return list_orders()
+    results = DB.trader.order.find()
+    serialized = orders_entity(results)
+    return serialized

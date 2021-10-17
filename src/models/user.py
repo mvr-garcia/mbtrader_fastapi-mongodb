@@ -9,4 +9,4 @@ class User(BaseModel):
     balance_brl: float = 0
     balance_btc: str = '0'
     balance_eth: str = '0'
-    created: datetime = datetime.now()
+    created: str = datetime.now().isoformat()

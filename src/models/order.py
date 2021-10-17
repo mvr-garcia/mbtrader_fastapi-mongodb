@@ -15,4 +15,4 @@ class Order(BaseModel):
     quantity: str
     fee: float
     net_quantity: float
-    created: datetime = datetime.now()
+    created: str = datetime.now().isoformat()
