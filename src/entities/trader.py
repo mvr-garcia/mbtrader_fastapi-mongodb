@@ -24,7 +24,7 @@ class Trader:
         self.pair = f'BRL{coin}'
         self.account_info = self.MB.get_account_info()
 
-    async def completed_orders_quantity(self):
+    def completed_orders_quantity(self):
         """Returns a boolean after verifying order quantities and checking with bank management."""
 
         orders = self.MB.list_orders()['response_data']
@@ -39,21 +39,21 @@ class Trader:
 
         return count_orders == MAX_ORDERS_PER_DAY
 
-    async def has_open_orders(self, coin):
+    def has_open_orders(self):
         """Verify if has open orders. Not yet executed."""
-        open_orders = self.account_info['response_data']['balances'][coin.name.lower()]['amount_open_orders'] > 0
+        open_orders = self.account_info['response_data']['balance'][self.coin.lower()]['amount_open_orders'] > 0
         return open_orders
 
-    async def get_last_candles(self):
+    def get_last_candles(self):
         """Candles from Mercado Bitcoin API V4"""
 
         now = int(datetime.now().timestamp())
         past = now - (24 * 3600)
-        response = self.INFO(self.coin).get_candles_1h(past, now)
+        response = self.INFO.get_candles_1h(past, now)
         candles = [candle['close'] for candle in response['candles']]
         return candles
 
-    async def calculate_ema(self, candles):
+    def calculate_ema(self, candles):
         """
         Calculate the Exponetial Moving Average for 9 and 21 periods
         """
@@ -62,7 +62,7 @@ class Trader:
 
         return nine_periods[-1], twenty_one_periods[-1]
 
-    async def make_technical_analysis(self):
+    def make_technical_analysis(self):
         """
         Analyzes the EMA and returns a verdict on the
         action to be taken
@@ -80,17 +80,17 @@ class Trader:
             print("\nDeath cross identified")
             return OrderType.SELL
         else:
-            print("\nTechnical analysis did not identify any crossing of moving averages."
+            print("\nTechnical analysis did not identify any crossing of moving averages. "
                   "Waiting for the next candlestick.")
             return None
 
-    async def get_max_investment(self):
+    def get_max_investment(self):
         """Returns the maximum value in BRL for the buy or sell order."""
         brl_balance = self.account_info['response_data']['balances']['brl']['available']
         max_investiment = float(brl_balance) * PORTFOLIO_INVESTMENT_PERCENTAGE
         return max_investiment
 
-    async def take_decision(self):
+    def take_decision(self):
         """Choose between buy/sell/wait next candle"""
         print("\nInitializing analysis")
 

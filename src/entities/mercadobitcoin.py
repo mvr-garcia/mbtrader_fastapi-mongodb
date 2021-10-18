@@ -1,19 +1,15 @@
 import hmac
 import json
-import requests
-
 from collections import OrderedDict
 from datetime import datetime
 from hashlib import sha512
 from http import client
+from os import EX_CONFIG
 from urllib import parse
 
-from src.settings import Pair
-from src.settings import OrderType
-from src.settings import TRADER_REQUEST_PATH
-from src.settings import REQUEST_HOST
-from src.settings import MB_TAPI_ID
-from src.settings import MB_TAPI_SECRET
+import requests
+from src.settings import (MB_TAPI_ID, MB_TAPI_SECRET, REQUEST_HOST,
+                          TRADER_REQUEST_PATH, OrderType, Pair)
 
 
 class MBTrader:
@@ -46,24 +42,19 @@ class MBTrader:
         }
 
         try:
-            TAPI = client.HTTPSDBection(REQUEST_HOST)
-            TAPI.request("POST", TRADER_REQUEST_PATH, params, headers)
+            response = requests.post(
+                "https://{}{}".format(REQUEST_HOST, TRADER_REQUEST_PATH),
+                headers=headers,
+                data=params
+            )
 
-            response = TAPI.getresponse()
-            response = response.read()
-
-            response_json = json.loads(response, object_pairs_hook=OrderedDict)
-
-            if response_json['status_code'] != 100:
-                print(response_json['error_message'])
-
-            if nome_retorno and nome_retorno != '':
-                return json.dumps(response_json['response_data'][nome_retorno], indent=4)
+            if response.json()['status_code'] == 100:
+                return response.json()
             else:
-                return json.dumps(response_json['response_data'], indent=4)
-        finally:
-            if TAPI:
-                TAPI.close()
+                print(response.json()['error_message'])
+
+        except requests.exceptions.RequestException as exc:
+            print(f"\nThe Mercado Bitcoin Trade API is not available. Exception: {exc}")
 
     def get_account_info(self):
         return self.post('get_account_info', params={})
@@ -110,7 +101,10 @@ class MBInfo:
 
     def get_candles_1h(self, past: int, now: int):
         url = f"https://mobile.mercadobitcoin.com.br/v4/BRL{self.coin}/candle?from={past}&to={now}&precision=1h"
+        headers = {'User-Agent': "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0"}
         try:
-            return requests.get(url)
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                return response.json()
         except requests.exceptions.RequestException:
             print(f"\nThe Mercado Bitcoin Data API is not available for {self.coin} candles.")
