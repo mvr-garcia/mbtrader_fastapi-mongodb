@@ -52,6 +52,7 @@ class MBTrader:
                 return response.json()
             else:
                 print(response.json()['error_message'])
+                return response.json()
 
         except requests.exceptions.RequestException as exc:
             print(f"\nThe Mercado Bitcoin Trade API is not available. Exception: {exc}")

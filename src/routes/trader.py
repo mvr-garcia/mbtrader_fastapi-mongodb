@@ -1,4 +1,5 @@
 import time
+from threading import Thread
 
 from fastapi import APIRouter
 
@@ -8,15 +9,12 @@ from src.entities.trader import Trader
 trader = APIRouter()
 
 
-trading = True
-
-
 @trader.get('/start/')
 async def start_trader():
     print("\nInitializing MV AutoTrader")
     global trading
     trading = True
-    job()
+    Thread(target=job).start()
     return {"status": "success"}
 
 
@@ -25,11 +23,11 @@ async def stop_trader():
     print("\nStoping MV AutoTrader")
     global trading
     trading = False
-    job()
+    Thread(target=job).start()
     return {"status": "success"}
 
 
-async def job():
+def job():
     global trading
     while trading:
         my_id = "616c979e96b218462c9120ab"

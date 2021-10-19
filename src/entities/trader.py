@@ -60,6 +60,13 @@ class Trader:
         nine_periods = ta.EMA(np.array(candles, dtype=float), timeperiod=9)
         twenty_one_periods = ta.EMA(np.array(candles, dtype=float), timeperiod=21)
 
+        # smoothes the result with the SMA of the last three EMA
+        nine_periods = list(nine_periods[-3:])
+        twenty_one_periods = list(twenty_one_periods[-3:])
+
+        nine_periods = ta.SMA(np.array(nine_periods, dtype=float), 3)
+        twenty_one_periods = ta.SMA(np.array(twenty_one_periods, dtype=float), 3)
+
         return nine_periods[-1], twenty_one_periods[-1]
 
     def make_technical_analysis(self):
@@ -84,11 +91,9 @@ class Trader:
                   "Waiting for the next candlestick.")
             return None
 
-    def get_max_investment(self):
+    def get_max_investment(self, balance):
         """Returns the maximum value in BRL for the buy or sell order."""
-        brl_balance = self.account_info['response_data']['balances']['brl']['available']
-        max_investiment = float(brl_balance) * PORTFOLIO_INVESTMENT_PERCENTAGE
-        return max_investiment
+        return float(balance) * PORTFOLIO_INVESTMENT_PERCENTAGE
 
     def take_decision(self):
         """Choose between buy/sell/wait next candle"""
@@ -98,9 +103,9 @@ class Trader:
 
         if trader_decision and not self.has_open_orders():
 
-            investment = self.get_max_investment()
-            limit_price = self.INFO.ticker(self.coin)['ticker'][trader_decision.value]
             user = self.user.get()
+            investment = self.get_max_investment(user['balance_brl'])
+            limit_price = self.INFO.ticker(self.coin)['ticker'][trader_decision.value]
 
             if trader_decision == OrderType.SELL:
                 print("\nChecking Sell order possibility.")
@@ -151,6 +156,7 @@ class Trader:
                 DB.trader.order.insert_one(order)
                 print(f"\n*** {trader_decision.value} order executed. ***")
             else:
-                print(f"\n*** There was a problem with the {self.coin} order. Please check the reason for the error. ***")
+                print(f"\n*** There was a problem with the {self.coin} order. "
+                      f"Error: {response['error_message']}***")
 
         print("\nNo Order defined. We will wait next candle.")
