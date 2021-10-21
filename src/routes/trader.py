@@ -35,4 +35,4 @@ def job():
             Trader(my_id, coin.name).take_decision()
             print(f"\nFinish trading for {coin.value} in MV AutoTrader")
 
-        time.sleep(30)
+        time.sleep(2700)

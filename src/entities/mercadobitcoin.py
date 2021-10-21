@@ -74,6 +74,13 @@ class MBTrader:
         }
         return self.post('cancel_order', params)
 
+    def get_order(self, coin_pair: Pair, order_id):
+        params = {
+            'coin_pair': coin_pair.value,
+            'order_id': order_id
+        }
+        return self.post('get_order', params)
+
 
 class MBInfo:
 

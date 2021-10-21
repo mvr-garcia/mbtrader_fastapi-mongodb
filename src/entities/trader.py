@@ -1,3 +1,4 @@
+import time
 from decimal import Decimal
 from datetime import datetime
 
@@ -92,7 +93,7 @@ class Trader:
             limit_price = self.INFO.ticker()['ticker'][trader_decision.value]
 
             if trader_decision == OrderType.SELL:
-                print("\nChecking Sell order possibility.")
+                print(f"\nChecking Sell order possibility for {self.coin}.")
 
                 quantity = user[f"balance_{self.coin.lower()}"]
 
@@ -103,18 +104,24 @@ class Trader:
             elif investment >= 50:
                 print("\nMaking Buy order.")
 
-                if Decimal(user[f"balance_{self.coin.lower()}"]) > 0:
-                    print(f"\nWe already have {self.coin}. Buy order aborted")
-                    return None
-
                 quantity = Decimal(investment / float(limit_price))
                 quantity = "{:.8f}".format(quantity)
+
+            else:
+                print(f"{trader_decision.value} order for {self.coin} aborted.")
+                return None
 
             response = self.MB.make_order(trader_decision, Pair[self.pair], quantity, limit_price)
 
             if response['status_code'] == 100:
 
-                limit_price = response["response_data"]["order"]["executed_price_avg"]
+                order_id = response["order"]['order_id']
+
+                time.sleep(300)
+
+                response = self.MB.get_order(Pair[self.pair], order_id)
+
+                limit_price = response["response_data"]["order"]["limit_price"]
                 quantity = response["response_data"]["order"]["executed_quantity"]
                 fee = response["response_data"]["order"]["fee"]
                 net_quantity = Decimal(quantity) - Decimal(fee)
@@ -143,9 +150,9 @@ class Trader:
                     "created": datetime.now().isoformat()
                 }
                 DB.trader.order.insert_one(order)
-                print(f"\n*** {trader_decision.value} order executed. ***")
+                return print(f"\n*** {trader_decision.value} order executed. ***")
             else:
-                print(f"\n*** There was a problem with the {self.coin} order. "
-                      f"Error: {response['error_message']}***")
+                return print(f"\n*** There was a problem with the {self.coin} order. "
+                             f"Error: {response['error_message']}***")
 
         print("\nNo Order defined. We will wait next candle.")
