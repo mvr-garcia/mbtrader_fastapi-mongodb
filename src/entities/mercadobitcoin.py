@@ -84,7 +84,7 @@ class MBInfo:
         url = f'https://www.mercadobitcoin.net/api/{self.coin}/{method}'
         try:
             response = requests.get(url)
-            return response
+            return response.json()
         except requests.exceptions.RequestException:
             print("\nThe Mercado Bitcoin Data API is not available.")
 

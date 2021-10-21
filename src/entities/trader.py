@@ -1,5 +1,5 @@
 from decimal import Decimal
-from datetime import date, datetime
+from datetime import datetime
 
 import talib as ta
 import numpy as np
@@ -11,7 +11,6 @@ from src.entities.user import UserMongo
 from src.settings import Coin, OrderType
 from src.settings import Pair
 from src.settings import PORTFOLIO_INVESTMENT_PERCENTAGE
-from src.settings import MAX_ORDERS_PER_DAY
 
 
 class Trader:
@@ -23,21 +22,6 @@ class Trader:
         self.coin = coin
         self.pair = f'BRL{coin}'
         self.account_info = self.MB.get_account_info()
-
-    def completed_orders_quantity(self):
-        """Returns a boolean after verifying order quantities and checking with bank management."""
-
-        orders = self.MB.list_orders()['response_data']
-        orders = orders.get('orders', None)[:3]
-
-        count_orders = 0
-        for order in orders[:6]:
-            order_date = int(order['created_timestamp'])
-            order_date = datetime.fromtimestamp(order_date).date()
-            if order_date == date.today():
-                count_orders += 1
-
-        return count_orders == MAX_ORDERS_PER_DAY
 
     def has_open_orders(self):
         """Verify if has open orders. Not yet executed."""
@@ -105,7 +89,7 @@ class Trader:
 
             user = self.user.get()
             investment = self.get_max_investment(user['balance_brl'])
-            limit_price = self.INFO.ticker(self.coin)['ticker'][trader_decision.value]
+            limit_price = self.INFO.ticker()['ticker'][trader_decision.value]
 
             if trader_decision == OrderType.SELL:
                 print("\nChecking Sell order possibility.")
@@ -116,8 +100,12 @@ class Trader:
                     print(f"\nNo {self.coin} amount for sell order.")
                     return None
 
-            elif investment >= 50 and not self.completed_orders_quantity():
+            elif investment >= 50:
                 print("\nMaking Buy order.")
+
+                if Decimal(user[f"balance_{self.coin.lower()}"]) > 0:
+                    print(f"\nWe already have {self.coin}. Buy order aborted")
+                    return None
 
                 quantity = Decimal(investment / float(limit_price))
                 quantity = "{:.8f}".format(quantity)
@@ -126,11 +114,11 @@ class Trader:
 
             if response['status_code'] == 100:
 
-                limit_price = response["response_data"]["executed_quantity"]
-                quantity = response["response_data"]["limit_price"]
-                fee = response["response_data"]["fee"]
+                limit_price = response["response_data"]["order"]["executed_price_avg"]
+                quantity = response["response_data"]["order"]["executed_quantity"]
+                fee = response["response_data"]["order"]["fee"]
                 net_quantity = Decimal(quantity) - Decimal(fee)
-                brl_amount = round(float(Decimal(net_quantity) * Decimal(limit_price)), 2)
+                brl_amount = round(float(net_quantity * Decimal(limit_price)), 2)
 
                 if trader_decision == OrderType.SELL:
                     user["balance_brl"] = user["balance_brl"] + brl_amount
@@ -138,7 +126,7 @@ class Trader:
 
                 elif trader_decision == OrderType.BUY:
                     user["balance_brl"] = user["balance_brl"] - brl_amount
-                    balance = Decimal(user[f"balance_{self.coin.lower()}"]) + Decimal(net_quantity)
+                    balance = str(Decimal(user[f"balance_{self.coin.lower()}"]) + net_quantity)
                     user[f"balance_{self.coin.lower()}"] = balance
 
                 self.user.update(user)
@@ -146,11 +134,12 @@ class Trader:
                     "user_id": user["id"],
                     "fiat": "Reais",
                     "symbol": Coin[self.coin].value,
+                    "price": limit_price,
                     "pair": self.pair,
                     "order_type": trader_decision.value,
-                    "quantity": response["response_data"]["quantity"],
-                    "fee": response["response_data"]["fee"],
-                    "net_quantity": net_quantity,
+                    "quantity": quantity,
+                    "fee": fee,
+                    "net_quantity": str(net_quantity),
                     "created": datetime.now().isoformat()
                 }
                 DB.trader.order.insert_one(order)
