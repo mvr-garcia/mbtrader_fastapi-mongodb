@@ -55,12 +55,12 @@ class Trader:
 
     def calculate_ema(self, candles):
         """
-        Calculate the Exponetial Moving Average for 9 and 21 periods
+        Calculate the Exponetial Moving Average for 9 and SMA for 21 periods
         """
         nine_periods = ta.EMA(np.array(candles, dtype=float), timeperiod=9)
-        twenty_one_periods = ta.EMA(np.array(candles, dtype=float), timeperiod=21)
+        twenty_one_periods = ta.SMA(np.array(candles, dtype=float), timeperiod=21)
 
-        # smoothes the result with the SMA of the last three EMA
+        # smoothes the result with the SMA of the last three results
         nine_periods = list(nine_periods[-3:])
         twenty_one_periods = list(twenty_one_periods[-3:])
 

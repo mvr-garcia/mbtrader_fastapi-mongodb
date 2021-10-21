@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 
-from src.models.order import Order
 from src.schemas.order import orders_entity
 from src.database.db import DB
 

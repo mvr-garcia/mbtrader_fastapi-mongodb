@@ -23,10 +23,10 @@ def get_last_candles(coin):
 
 def calculate_ema(candles):
     """
-    Calculate the Exponetial Moving Average for 9 and 21 periods
+    Calculate the Exponetial Moving Average for 9 and SMA for 21 periods
     """
     nine_periods = ta.EMA(np.array(candles, dtype=float), timeperiod=9)
-    twenty_one_periods = ta.EMA(np.array(candles, dtype=float), timeperiod=21)
+    twenty_one_periods = ta.SMA(np.array(candles, dtype=float), timeperiod=21)
 
     # smoothes the result with the SMA of the last three EMA
     nine_periods = list(nine_periods[-3:])
@@ -64,7 +64,5 @@ def make_technical_analysis():
                     if previous != 'sell':
                         previous = 'sell'
                         writer.writerow([i, OrderType.SELL.value, last_candle])
-                else:
-                    print("Wait next analysis")
 
                 i += 1

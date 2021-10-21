@@ -11,6 +11,7 @@ class Order(BaseModel):
     user_id = str
     fiat: str = Fiat.BRL.value
     symbol: str = Coin.BTC.value
+    price: str = '0'
     pair: str = f"{Fiat.BRL.name}{Coin.BTC.name}"
     order_type: str = OrderType.BUY.value
     quantity: str

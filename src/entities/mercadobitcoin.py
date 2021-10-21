@@ -1,10 +1,6 @@
 import hmac
-import json
-from collections import OrderedDict
 from datetime import datetime
 from hashlib import sha512
-from http import client
-from os import EX_CONFIG
 from urllib import parse
 
 import requests

@@ -4,6 +4,7 @@ def order_entity(item) -> dict:
         "user_id": item["user_id"],
         "fiat": item["fiat"],
         "symbol": item["symbol"],
+        "price": item["price"],
         "pair": item["pair"],
         "order_type": item["order_type"],
         "quantity": item["quantity"],
