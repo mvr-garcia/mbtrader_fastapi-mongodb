@@ -115,7 +115,7 @@ class Trader:
 
             if response['status_code'] == 100:
 
-                order_id = response["order"]['order_id']
+                order_id = response["response_data"]["order"]['order_id']
 
                 time.sleep(300)
 
